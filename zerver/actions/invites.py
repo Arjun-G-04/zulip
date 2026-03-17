@@ -321,6 +321,8 @@ class PreregistrationInviteData:
     invited_as: int
     is_multiuse: bool
     notify_referrer_on_join: bool
+    stream_ids: list[int]
+    group_ids: list[int]
 
 
 @dataclass
@@ -332,6 +334,8 @@ class MultiuseInviteData:
     link_url: str
     invited_as: int
     is_multiuse: bool
+    stream_ids: list[int]
+    group_ids: list[int]
 
 
 def do_get_invites_controlled_by_user(user_profile: UserProfile) -> list[dict[str, Any]]:
@@ -363,6 +367,8 @@ def do_get_invites_controlled_by_user(user_profile: UserProfile) -> list[dict[st
                 invited_as=invitee.invited_as,
                 is_multiuse=False,
                 notify_referrer_on_join=invitee.notify_referrer_on_join,
+                stream_ids=list(invitee.streams.values_list("id", flat=True)),
+                group_ids=list(invitee.groups.values_list("id", flat=True)),
             )
         )
 
@@ -404,6 +410,8 @@ def do_get_invites_controlled_by_user(user_profile: UserProfile) -> list[dict[st
                 link_url=confirmation_url_for(confirmation_obj),
                 invited_as=invite.invited_as,
                 is_multiuse=True,
+                stream_ids=list(invite.streams.values_list("id", flat=True)),
+                group_ids=list(invite.groups.values_list("id", flat=True)),
             )
         )
     return [asdict(invite) for invite in invites]

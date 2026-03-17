@@ -2492,3 +2492,53 @@ label.preferences-radio-choice-label {
         }
     }
 }
+
+#invite-details-modal {
+    .invite-details-modal {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .invite-details-row {
+        display: grid;
+        grid-template-columns: 7em 1fr;
+        gap: 4px 12px;
+        align-items: baseline;
+    }
+
+    .invite-details-label {
+        font-weight: 600;
+        color: var(--color-text-default);
+        white-space: nowrap;
+    }
+
+    .invite-details-value {
+        color: var(--color-text-default);
+        word-break: break-word;
+    }
+
+    .invite-details-list {
+        margin: 0;
+        padding-left: 1.2em;
+        list-style: disc;
+
+        & li {
+            margin: 2px 0;
+        }
+    }
+
+    .invite-details-actions {
+        display: flex;
+        gap: 4px;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid light-dark(hsl(0deg 0% 87%), hsl(0deg 0% 27%));
+
+        .check {
+            &.hide {
+                display: none;
+            }
+        }
+    }
+}

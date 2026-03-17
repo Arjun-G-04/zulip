@@ -1,0 +1,90 @@
+{{#with invite}}
+<div class="invite-details-modal">
+    <div class="invite-details-row">
+        <div class="invite-details-label">{{t "Invitee"}}</div>
+        <div class="invite-details-value">
+            {{#if is_multiuse}}
+            <a href="{{link_url}}" target="_blank" rel="noopener noreferrer">{{t "Invite link"}}</a>
+            {{else}}
+            {{email}}
+            {{/if}}
+        </div>
+    </div>
+    {{#if is_admin}}
+    <div class="invite-details-row">
+        <div class="invite-details-label">{{t "Invited by"}}</div>
+        <div class="invite-details-value panel_user_list">
+            {{> ../user_display_only_pill display_value=referrer_name user_id=invited_by_user_id is_active=true}}
+        </div>
+    </div>
+    {{/if}}
+    <div class="invite-details-row">
+        <div class="invite-details-label">{{t "Invited at"}}</div>
+        <div class="invite-details-value">{{invited_absolute_time}}</div>
+    </div>
+    <div class="invite-details-row">
+        <div class="invite-details-label">{{t "Expires at"}}</div>
+        <div class="invite-details-value">
+            {{#if expiry_date_absolute_time}}
+            {{expiry_date_absolute_time}}
+            {{else}}
+            {{t "Never expires"}}
+            {{/if}}
+        </div>
+    </div>
+    <div class="invite-details-row">
+        <div class="invite-details-label">{{t "Role"}}</div>
+        <div class="invite-details-value">{{invited_as_text}}</div>
+    </div>
+    <div class="invite-details-row">
+        <div class="invite-details-label">{{t "Channels"}}</div>
+        <div class="invite-details-value">
+            {{#if has_stream_names}}
+            <ul class="invite-details-list">
+                {{#each stream_names}}
+                <li>{{this}}</li>
+                {{/each}}
+            </ul>
+            {{else}}
+            {{t "Default channels"}}
+            {{/if}}
+        </div>
+    </div>
+    {{#if has_group_names}}
+    <div class="invite-details-row">
+        <div class="invite-details-label">{{t "Groups"}}</div>
+        <div class="invite-details-value">
+            <ul class="invite-details-list">
+                {{#each group_names}}
+                <li>{{this}}</li>
+                {{/each}}
+            </ul>
+        </div>
+    </div>
+    {{/if}}
+    <div class="invite-details-actions">
+        {{> ../components/icon_button
+          icon="trash"
+          intent="danger"
+          custom_classes="revoke tippy-zulip-delayed-tooltip"
+          data-tippy-content=(t "Revoke")
+          disabled=disable_buttons
+          }}
+        {{#unless is_multiuse}}
+        {{> ../components/icon_button
+          icon="check"
+          intent="success"
+          custom_classes="check hide"
+          disabled=true
+          }}
+        {{> ../components/icon_button
+          icon="send-dm"
+          intent="neutral"
+          custom_classes="resend tippy-zulip-delayed-tooltip"
+          data-tippy-content=(t "Resend")
+          disabled=disable_buttons
+          }}
+        {{/unless}}
+    </div>
+</div>
+{{/with}}

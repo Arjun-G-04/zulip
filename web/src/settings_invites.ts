@@ -4,6 +4,7 @@ import * as z from "zod/mini";
 import render_settings_resend_invite_modal from "../templates/confirm_dialog/confirm_resend_invite.hbs";
 import render_settings_revoke_invite_modal from "../templates/confirm_dialog/confirm_revoke_invite.hbs";
 import render_admin_invites_list from "../templates/settings/admin_invites_list.hbs";
+import render_invite_details_modal from "../templates/settings/invite_details_modal.hbs";
 
 import * as blueslip from "./blueslip.ts";
 import * as channel from "./channel.ts";
@@ -16,8 +17,10 @@ import * as people from "./people.ts";
 import * as settings_config from "./settings_config.ts";
 import * as settings_data from "./settings_data.ts";
 import {current_user} from "./state_data.ts";
+import * as stream_data from "./stream_data.ts";
 import * as timerender from "./timerender.ts";
 import * as ui_report from "./ui_report.ts";
+import * as user_groups from "./user_groups.ts";
 import * as util from "./util.ts";
 
 export const invite_schema = z.intersection(
@@ -27,6 +30,8 @@ export const invite_schema = z.intersection(
         expiry_date: z.nullable(z.number()),
         id: z.number(),
         invited_as: z.number(),
+        stream_ids: z.array(z.number()),
+        group_ids: z.array(z.number()),
     }),
     z.discriminatedUnion("is_multiuse", [
         z.object({
@@ -49,7 +54,13 @@ type Invite = z.output<typeof invite_schema> & {
     referrer_name?: string;
     img_src?: string;
     notify_referrer_on_join?: boolean;
+    stream_names?: string[];
+    group_names?: string[];
+    has_stream_names?: boolean;
+    has_group_names?: boolean;
 };
+
+const invite_data_by_id = new Map<number, Invite>();
 
 const meta = {
     loaded: false,
@@ -57,6 +68,7 @@ const meta = {
 
 export function reset(): void {
     meta.loaded = false;
+    invite_data_by_id.clear();
 }
 
 function failed_listing_invites(xhr: JQuery.jqXHR): void {
@@ -108,6 +120,18 @@ function populate_invites(invites_data: {invites: Invite[]}): void {
             item.img_src = people.small_avatar_url_for_person(
                 people.get_by_user_id(item.invited_by_user_id),
             );
+            item.stream_names = item.stream_ids
+                .map((id) => stream_data.get_stream_name_from_id(id))
+                .filter((name) => name !== "");
+            item.group_names = item.group_ids
+                .map((id) => {
+                    const group = user_groups.maybe_get_user_group_from_id(id);
+                    return group?.name ?? "";
+                })
+                .filter((name) => name !== "");
+            item.has_stream_names = item.stream_names.length > 0;
+            item.has_group_names = item.group_names.length > 0;
+            invite_data_by_id.set(item.id, item);
             return render_admin_invites_list({invite: item});
         },
         filter: {
@@ -323,6 +347,37 @@ export function on_load_success(
         });
 
         $(".dialog_submit_button").attr("data-invite-id", invite_id);
+    });
+
+    $(".admin_invites_table").on("click", ".view-invite-details", function (this: HTMLElement, e) {
+        // This click event must not get propagated to parent container otherwise the modal
+        // will not show up because of a call to `close_active` in `settings.ts`.
+        e.preventDefault();
+        e.stopPropagation();
+
+        const $row = $(this).closest("tr");
+        const invite_id = Number($row.attr("data-invite-id"));
+        const invite = invite_data_by_id.get(invite_id);
+        if (invite === undefined) {
+            blueslip.error("Could not find invite data for invite_id", {invite_id});
+            return;
+        }
+
+        const modal_content_html = render_invite_details_modal({invite});
+
+        const modal_title_html = invite.is_multiuse
+            ? $t_html({defaultMessage: "Invitation link details"})
+            : $t_html(
+                  {defaultMessage: "Invitation details for {email}"},
+                  {email: invite.email},
+              );
+
+        dialog_widget.launch({
+            modal_title_html,
+            modal_content_html,
+            id: "invite-details-modal",
+            hide_footer: true,
+        });
     });
 }
 
